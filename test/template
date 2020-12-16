@@ -1,0 +1,17 @@
+import { part1, part2 } from "../src/day"
+
+describe('', () => {
+    it('return ', async () => {
+        const file = '../test/data/day/test1'
+                
+        expect(await part1(file)).toBe()
+    })
+})
+
+describe('', () => {
+    it('return ', async () => {
+        const file = '../test/data/day/test1'
+                
+        expect(await part2(file)).toBe()
+    })
+})
