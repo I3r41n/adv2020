@@ -1,6 +1,6 @@
 import { readFile } from 'fs'
 import { promisify } from 'util'
-import { flow, identity, partialRight } from 'lodash'
+import { flow, identity, isObject, keys, partialRight } from 'lodash'
 
 const read = async (filename: string) => promisify(readFile)(`${__dirname}/${filename}`, { encoding: 'utf-8' })
 
@@ -13,6 +13,8 @@ const cleanData = async (data: Promise<string>, transformLines: <T>(value: strin
 const exercise = async (file: string, calculate, parser) => 
     flow([read, partialRight(cleanData, parser), calculate])(file)
 
+const toString = f => isObject(f) ? keys(f).reduce((acc, cur) => acc + ` ${cur}: ${f[cur]} `,'{') + '}': f
+
 export class Runner<X,T> {
     firstExercise: <T>(filename?: string, extra?: number) => Promise<T>
     secondExercise: <T>(filename?: string, extra?: number) => Promise<T>
@@ -22,10 +24,12 @@ export class Runner<X,T> {
         this.secondExercise = async (filename: string = file, extra?: number) => exercise(filename, partialRight(calculate2, extra), transformLines)
     }
 
+   
     run = async () => {
         const first = await this.firstExercise()
         const second = await this.secondExercise()
-        console.log(`results ${first} ${second}`)
+
+        console.log(`results ${toString(first)} ${toString(second)}`)
     }
 }
 
