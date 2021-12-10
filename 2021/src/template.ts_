@@ -1,0 +1,13 @@
+import  {getRunner} from './core'
+const day = 
+const calculate = async (_: Promise<any[]>) => await Promise.resolve(0)
+
+const {part1, part2
+    //,run
+    } = getRunner(`./data/day${day}.txt`, calculate, calculate)
+
+
+//run()
+
+export { part1, part2 }
+
