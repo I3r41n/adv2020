@@ -1,85 +1,89 @@
+import { identity, take } from 'lodash'
 import { getRunner } from './core'
 const day = 9
 
-type location = {x: number, y:number}
+type TreeNode<T> = 
+    {x: number, 
+     y:number,
+     neighbours?: TreeNode<T>[],
+     value: T}
 
 const transformLines = (line: string) => line.split('').map(c => +c)
 
-const low_values = (heightmap: number[][]) => heightmap.reduce((acc, row, i, arr1) =>
-    acc.concat(row.reduce((points, value, j, arr2) =>
-        [
-            j > 0 && arr2[j - 1],
-            j < arr2.length - 1 && arr2[j + 1],
-            i > 0 && heightmap[i - 1][j],
-            i < arr1.length - 1 && heightmap[i + 1][j]
-        ]
-            .filter(i => i > 0 || i === 0)
-            .every(v => v > value)
-            ? [...points, value]
-            : points
-        , []))
-    , [])
+const neighbors = <T>(x: number , y: number, map:T[][]) =>  [
+        y > 0 && { x, y: y - 1, value: map[x][y-1] } || undefined as TreeNode<T>,
+        y < map[0].length - 1 && { x, y: y + 1, value: map[x][y+1] } || undefined as TreeNode<T>, 
+        x > 0 && { x: x - 1, y, value: map[x-1][y] } || undefined as TreeNode<T>,
+        x < map.length - 1 && { x: x + 1, y, value: map[x+1][y] } || undefined as TreeNode<T>
+    ].filter(i => i)
 
-const low_points = (heightmap: number[][]) => heightmap.reduce((acc, row, x, arr1) =>
-    acc.concat(row.reduce((points, value, y, arr2) => {
-        const neighbors = [
-            y > 0 && { x, y: y - 1 } || undefined as location,
-            y < arr2.length - 1 && { x, y: y + 1 } || undefined as location, 
-            x > 0 && { x: x - 1, y } || undefined as location,
-            x < arr1.length - 1 && { x: x + 1, y } || undefined as location
-        ]
-            .filter(i => i)
-        return neighbors.every(({ x, y }) => heightmap[x][y] > value) ? points.concat({ x, y }) : points
+const transverse = <T>(
+        start: TreeNode<T>[], 
+        tree: TreeNode<T>[],
+        filter_node: (node: TreeNode<T>)=> boolean = identity):TreeNode<T>[] => {
+            
+    const aux = <T>(
+        queue:  TreeNode<T>[], 
+        visited: TreeNode<T>[]) => {
 
-    }, [] as location[]))
-    , [] as location[])
+        if (queue.length === 0) return visited
 
-const basin = (low: location[], heightmap: number[][]) => {
-    const maxX = heightmap.length - 1
-    const maxY = heightmap[0].length - 1
-
-    const aux = (points: location[], locations:location[]) => {
-        console.log(points , locations)
+        const next = queue.reduce((acc, cur) => {
+            const was_visited = visited.find(
+                    ({x,y}) => x === cur.x && y == cur.y ) 
+            
+            return !!was_visited 
+                ? acc 
+                : acc.concat(cur.neighbours.map(n => 
+                    tree.find(({x,y}) => x === n.x && y == n.y ))
+                    .filter(filter_node))
+        }, [])
         
-        if (points.length === 0) return locations 
-        const next_locations = locations.concat(points) 
-        const filter_set = new Set(next_locations)   
-        const next_points = points.reduce((acc, {x,y}) => { 
-            const neighbors = [
-                y > 0 && { x, y: y - 1 } || undefined as location,
-                y < maxY - 1 && { x, y: y + 1 } || undefined as location, 
-                x > 0 && { x: x - 1, y } || undefined as location,
-                x < maxX - 1 && { x: x + 1, y } || undefined as location
-            ].filter(i => i)
-             .filter(l => !filter_set.has(l))
-             .filter(({x,y}) => heightmap[x][y] < 9)
-
-            return acc.concat(neighbors)
-        }, [] )
-
-        console.log(points, next_points)
-        return aux(next_points, next_locations)
+        return aux<T>(next, [...new Set([...visited, ...queue])]) 
     }
-
-    return aux(low, [])
+    
+    return aux(start, [])
 }
 
+const low_values = (heightmap: number[][]) => 
+    heightmap.reduce((acc, row, x) => 
+        acc.concat(row.map((value, y) => ({
+            x,
+            y, 
+            neighbours: neighbors(x,y, heightmap),
+            value
+        }))), [] as TreeNode<number>[]
+    )
+    .filter(({neighbours, value}) => 
+        neighbours.every((n => n.value > value)))
+              
+
 const calculate = async (data: Promise<number[][]>) =>
-    low_values((await data)).reduce((acc, cur) => acc += cur + 1, 0)
+    low_values((await data)).reduce((acc, cur) => acc += cur.value + 1, 0)
 
 const calculate2 = async (data: Promise<number[][]>) => {
     const heightmap = (await data)
-    const basins = basin([low_points(heightmap)[0]], heightmap)
+    const tree = heightmap.reduce((acc, row, x) => 
+        acc.concat(row.map((value, y) => ({
+            x,
+            y, 
+            neighbours: neighbors(x,y, heightmap),
+            value
+        }))), [] as TreeNode<number>[]
+    )
 
-    console.log(basins)
+    const low_points = tree
+        .filter(({neighbours, value}) => 
+            neighbours.every((n => n.value > value))  )
 
-    return 0
+    const basins = low_points.map(lp => transverse([lp], tree, ({value}) => value < 9))        
+    
+    return take(basins.map((a) => a.length).sort((a,b) => b - a), 3).reduce((acc, cur) => acc *= cur, 1)
 }
 
 const { part1, part2
     // ,run
 } = getRunner(`./data/day${day}.txt`, calculate, calculate2, transformLines)
-
 
 // run()
 
