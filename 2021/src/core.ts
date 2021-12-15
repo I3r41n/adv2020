@@ -45,3 +45,8 @@ export const getRunner = <X,T>(filename: string,
 }
 
 
+export type TreeNode<T> = 
+    {x: number, 
+     y:number,
+     neighbours?: TreeNode<T>[],
+     value: T}

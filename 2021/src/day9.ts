@@ -1,12 +1,6 @@
 import { identity, take } from 'lodash'
-import { getRunner } from './core'
+import { getRunner, TreeNode } from './core'
 const day = 9
-
-type TreeNode<T> = 
-    {x: number, 
-     y:number,
-     neighbours?: TreeNode<T>[],
-     value: T}
 
 const transformLines = (line: string) => line.split('').map(c => +c)
 
