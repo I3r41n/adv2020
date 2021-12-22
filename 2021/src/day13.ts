@@ -44,7 +44,6 @@ const print = (matrix: Set<string>, folds: fold[]) => {
     const empty_paper = Array.from({length: max(folded.map(({x}) => x)) + 1}, 
         () =>  Array.from({length: max(folded.map(({y}) => y)) + 1}, () => ' '))
     
-    
     const code = folded
         .reduce((acc, {x,y}) => (acc[x][y] = '%', acc), empty_paper)
         .reduce((m, r) =>  m+= r.reduce((n, c) => n += c) + "\n", "\n")  

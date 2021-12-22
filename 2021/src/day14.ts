@@ -63,8 +63,8 @@ const calculate = async (data: Promise<(string | string[])[]>) => get_frequencie
 const calculate2 = async (data: Promise<(string | string[])[]>) => get_frequencies(data, 40)
 
 const {part1, part2
-    ,run
+    // ,run
     } = getRunner(`./data/day${day}.txt`, calculate, calculate2, transform)
-run()
+// run()
 
 export { part1, part2 }
